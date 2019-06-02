@@ -1,0 +1,96 @@
+mysql -u root -p
+then in mysql> 
+show databases;
+use mysql;
+CREATE USER 'datadog'@'10.1.0.4' IDENTIFIED WITH mysql_native_password by 'Dd1!';
+CREATE USER 'datadog'@'localhost' IDENTIFIED WITH mysql_native_password by 'Dd1!';
+CREATE USER 'datadog'@'127.0.0.1' IDENTIFIED WITH mysql_native_password by 'Dd1!';
+
+\q to quit
+
+
+---
+Verify with:
+mysql -u datadog --password=Dd1! -e "show status" | \
+> grep Uptime && echo -e "\033[0;32mMySQL user - OK\033[0m" || \
+> echo -e "\033[0;31mCannot connect to MySQL\033[0m"
+
+
+----
+as we use a version 8 of MySQ:
+
+ALTER USER 'datadog'@'localhost' WITH MAX_USER_CONNECTIONS 5;
+ALTER USER 'datadog'@'10.1.0.4' WITH MAX_USER_CONNECTIONS 5;
+ALTER USER 'datadog'@'127.0.0.1' WITH MAX_USER_CONNECTIONS 5;
+
+show databases like 'performance_schema';
+GRANT SELECT ON performance_schema.* TO 'datadog'@'localhost';
+GRANT SELECT ON performance_schema.* TO 'datadog'@'10.1.0.4';
+GRANT SELECT ON performance_schema.* TO 'datadog'@'127.0.0.1';
+
+
+***************
+On the datadog agent container:
+
+in /etc/datadog-agent/conf.d/mysql.d:
+(cat > conf.yaml as vi not available on a container)
+
+init_config:
+
+instances:
+  - server: 10.1.0.5
+    user: datadog
+    pass: 'Dd1!' # from the CREATE USER step earlier
+    port: 3306 # e.g. 3306
+    options:
+        replication: 0
+        galera_cluster: true - DONE
+        extra_status_metrics: true
+        extra_innodb_metrics: true
+        extra_performance_metrics: true
+        schema_size_metrics: false
+        disable_innodb_metrics: false
+
+-----
+Log Collection
+Available for Agent >6.0
+
+By default MySQL logs everything in /var/log/syslog which requires root access to read. 
+
+To make the logs more accessible, follow these steps:
+Edit /etc/mysql/conf.d/mysqld_safe_syslog.cnf and remove or comment the lines.
+
+Edit /etc/mysql/my.cnf and add following lines to enable general, error, and slow query logs:
+
+[mysqld_safe]
+log_error=/var/log/mysql/mysql_error.log
+[mysqld]
+general_log = on
+general_log_file = /var/log/mysql/mysql.log
+log_error=/var/log/mysql/mysql_error.log
+slow_query_log = on
+slow_query_log_file = /var/log/mysql/mysql-slow.log
+long_query_time = 2
+
+
+Save the file and restart MySQL using following commands: service mysql restart
+
+Make sure the Agent has read access on the /var/log/mysql directory and all of the files within. 
+=> this is if you have both on the same solution !!!
+
+
+Double-check your logrotate configuration to make sure those files are taken into account and that the permissions are correctly set there as well.
+
+In /etc/logrotate.d/mysql-server there should be something similar to:
+
+/var/log/mysql.log /var/log/mysql/mysql.log /var/log/mysql/mysql-slow.log {
+        daily
+        rotate 7
+        missingok
+        create 644 mysql adm
+        Compress
+}
+
+
+---
+

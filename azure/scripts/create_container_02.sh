@@ -1,0 +1,11 @@
+az container create \
+    --name mysql-02 \
+    --resource-group MyContainers \
+    --image mysql/mysql-server:latest \
+    --vnet myvnet-01 \
+    --subnet mysubnet-01 \
+	--cpu 1 --memory 1.5 \
+	--subscription Pay-As-You-Go \
+	--restart-policy OnFailure \
+	--location westeurope \
+	--environment-variables MYSQL_ROOT_PASSWORD=Dd1!

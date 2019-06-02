@@ -1,0 +1,47 @@
+version: '3.1'
+
+services:
+
+  wordpress:
+    image: wordpress
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: exampleuser
+      WORDPRESS_DB_PASSWORD: examplepass
+      WORDPRESS_DB_NAME: exampledb
+      DATADOG_HOST: datadog
+
+  datadog:
+    build: datadog
+    links:
+     - db # Ensures datadog container can connect to MySQL container
+     - wordpress # Ensures datadog container can connect to PHP container
+    environment:
+     DD_API_KEY: 57b752e8a4a68a1eafbd340a03bdbbb3
+     DD_APM_ENABLED: true 
+     DD_HOSTNAME: cl-2 
+     DD_TAGS: christophe
+     DD_APM_NON_LOCAL_TRAFFIC: true 
+     DD_LOGS_ENABLED: true
+      azure-file-volume-share-name: containershare
+      azure-file-volume-account-name: claudou
+      azure-file-volume-account-key: SJH2STMwL7jrHGkQcWzVPdOVRp7Nk+qzodrICSXVSec5flUzzcTOy0hbIvasiQDESJwh+8GV9AHVgj01jErogA== 
+      azure-file-volume-mount-path: /conf.d
+
+  db:
+    image: mysql:5.7
+     volumes:
+       - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: exampledb
+      MYSQL_USER: exampleuser
+      MYSQL_PASSWORD: examplepass
+      MYSQL_ROOT_PASSWORD: 'Dd1!'
+      DATADOG_HOST: datadog
+
+volumes:
+    db_data:

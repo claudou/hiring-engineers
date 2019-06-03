@@ -1,7 +1,7 @@
 FROM datadog/agent:latest
 ADD conf.d/mysql.yaml /etc/datadog-agent/conf.d/mysql.yaml
 
-ENV DD_API_KEY=57b752e8a4a68a1eafbd340a03bdbbb3
+ENV DD_API_KEY=#######################
 ENV DD_APM_ENABLED=true
 ENV DD_HOSTNAME=cl-dd-01
 ENV DD_TAGS=ChristopheL-TAG

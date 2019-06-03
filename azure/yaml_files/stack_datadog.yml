@@ -29,7 +29,7 @@ services:
      - db # Ensures datadog container can connect to MySQL container
      - wordpress # Ensures datadog container can connect to PHP container
     environment:
-     DD_API_KEY: 57b752e8a4a68a1eafbd340a03bdbbb3
+     DD_API_KEY: ####
      DD_APM_ENABLED: 'true' 
      DD_HOSTNAME: cl-dd-agent-01
      DD_TAGS: christophe
